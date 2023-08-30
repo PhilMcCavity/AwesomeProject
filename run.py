@@ -42,6 +42,7 @@ def main(parser: argparse.ArgumentParser):
             entity=args.wandb_entity,
             job_type=args.method,
             tags=args.wandb_tags,
+            sync_tensorboard=True,
         )
         wandb.config.update(args, allow_val_change=True)
 
