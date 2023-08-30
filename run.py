@@ -3,6 +3,8 @@ import tensorflow as tf
 from datetime import datetime
 from pathlib import Path
 
+import wandb
+
 from my_cool_method.sac.replay_buffers import BufferType
 from my_cool_method.sac.sac import SAC
 from my_cool_method.utils.logx import EpochLogger
@@ -32,8 +34,17 @@ def main(parser: argparse.ArgumentParser):
 
     # Logging
     if args.with_wandb:
-        WandBLogger.add_cli_args(parser)
-        WandBLogger(parser, [scenario], timestamp)
+        wandb.init(
+            project='MyCoolProject',
+            group='MyCoolExperiments',
+            id=f'seed_{args.seed}_{args.method}_{args.wandb_experiment}_{timestamp}',
+            dir=args.wandb_dir,
+            entity=args.wandb_entity,
+            job_type=args.method,
+            tags=args.wandb_tags,
+        )
+        wandb.config.update(args, allow_val_change=True)
+
     logger = EpochLogger(args.logger_output, config=vars(args), group_id=args.group_id)
 
     if args.gpu:

@@ -16,13 +16,14 @@ def parse_args():
                  'raise_the_roof', 'floor_is_lava', 'hide_and_seek', 'arms_dealer', 'parkour', 'pitfall'])
     arg("--cl_method", type=str, choices=[None, "clonex", "owl", "l2", "ewc", "mas", "vcl", "packnet", "agem"],
         default=None, help="If None, the fine-tuning method will be used")
+    arg("--method", type=str, default='OldBoringMethod', help="Method to use")
     arg("--envs", type=str, nargs="+", default=['default'], help="Name of the environments in the scenario(s) to run")
     arg("--test_envs", type=str, nargs="+", default=[],
         help="Name of the environments to periodically evaluate the agent on")
     arg("--no_test", default=False, action='store_true', help="If True, no test environments will be used")
     arg("--sequence", type=str, default=None, choices=['CD4', 'CD8', 'CD16', 'CO4', 'CO8', 'CO16', 'COC'],
         help="Name of the continual learning sequence")
-    arg('--seed', type=int, default=0, help='Seed for randomness')
+    arg('--seed', type=int, default=1, help='Seed for randomness')
     arg('--gpu', '-g', default=None, type=int, help='Which GPU to use')
     arg("--sparse_rewards", default=False, action='store_true', help="Whether to use the sparse reward setting")
     arg('--start_from', type=int, default=0, help='Which task to start/continue the training from')
@@ -129,6 +130,16 @@ def parse_args():
     arg('--frame_width', type=int, default=84, help='Width of the frame')
     arg("--augment", default=False, action='store_true', help="Whether to use image augmentation")
     arg("--augmentation", type=str, default=None, choices=['conv', 'shift', 'noise'], help="Type of image augmentation")
+
+    # WandB
+    arg('--wandb_entity', default=None, type=str, help='WandB username (entity).')
+    arg('--wandb_project', default='COOM', type=str, help='WandB "Project"')
+    arg('--wandb_group', default=None, type=str, help='WandB "Group". Name of the env by default.')
+    arg('--wandb_job_type', default='train', type=str, help='WandB job type')
+    arg('--wandb_tags', default=[], type=str, nargs='*', help='Tags can help finding experiments')
+    arg('--wandb_key', default=None, type=str, help='API key for authorizing WandB')
+    arg('--wandb_dir', default=None, type=str, help='the place to save WandB files')
+    arg('--wandb_experiment', default='', type=str, help='Identifier to specify the experiment')
 
     # Reward
     arg('--reward_frame_survived', default=0.01, type=float, help='For surviving a frame')
