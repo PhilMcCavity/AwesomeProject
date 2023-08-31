@@ -41,7 +41,7 @@ pip install -r requirements.txt
 ```
 
 
-## Reproduce Our SOTA Results
+## Reproduce Our Results
 ```
 python run.py --config configs/ours.yaml
 ```
