@@ -1,7 +1,7 @@
 import pandas as pd
 
-from experiments.results.common import *
-from experiments.results.common import calculate_performance, get_cl_data, calculate_forgetting
+from my_cool_experiments.results.common import *
+from my_cool_experiments.results.common import calculate_performance, get_cl_data, calculate_forgetting
 
 
 def print_results(metric_data: np.ndarray, ci: np.ndarray, methods: List[str], metric: str):

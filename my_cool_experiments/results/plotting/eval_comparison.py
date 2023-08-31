@@ -1,6 +1,6 @@
 import os
 
-from experiments.results.common import *
+from my_cool_experiments.results.common import *
 
 LINE_STYLES = ['-', '--', ':', '-.']
 

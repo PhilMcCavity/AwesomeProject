@@ -1,5 +1,5 @@
-from experiments.results.common import *
-from experiments.results.common import get_baseline_data
+from my_cool_experiments.results.common import *
+from my_cool_experiments.results.common import get_baseline_data
 
 COLOR_SAC = '#C44E52'
 COLORS = ['#1F77B4', '#55A868', '#4C72B0', '#8172B2', '#CCB974', '#64B5CD', '#777777', '#FF8C00', '#917113']

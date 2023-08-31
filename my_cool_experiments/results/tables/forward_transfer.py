@@ -1,6 +1,6 @@
 import pandas as pd
 
-from experiments.results.common import *
+from my_cool_experiments.results.common import *
 
 
 def get_cl_data(methods: List[str], seeds, envs: List[str], task_length, metric: str, sequence: str):

@@ -1,4 +1,4 @@
-from experiments.results.common import *
+from my_cool_experiments.results.common import *
 
 
 # Logging of some metrics begins when the corresponding task starts

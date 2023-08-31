@@ -1,5 +1,5 @@
-from experiments.results.common import *
-from experiments.results.common import get_action_data
+from my_cool_experiments.results.common import *
+from my_cool_experiments.results.common import get_action_data
 
 
 def main(args: argparse.Namespace) -> None:

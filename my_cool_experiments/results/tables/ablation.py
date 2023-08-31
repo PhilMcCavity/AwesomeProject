@@ -1,8 +1,8 @@
 import pandas as pd
 from typing import Callable
 
-from experiments.results.common import *
-from experiments.results.common import calculate_transfer
+from my_cool_experiments.results.common import *
+from my_cool_experiments.results.common import calculate_transfer
 
 
 def main(cfg: argparse.Namespace) -> None:

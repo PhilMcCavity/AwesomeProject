@@ -2,7 +2,7 @@ import os
 import wandb
 from wandb.apis.public import Run
 
-from experiments.results.common import *
+from my_cool_experiments.results.common import *
 
 
 def has_single_tag(run: Run) -> bool:

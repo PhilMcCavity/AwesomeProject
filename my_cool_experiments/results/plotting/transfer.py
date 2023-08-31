@@ -1,7 +1,7 @@
 import os
 
-from experiments.results.common import *
-from experiments.results.common import add_main_ax
+from my_cool_experiments.results.common import *
+from my_cool_experiments.results.common import add_main_ax
 
 COLORS = ['#C44E52', '#55A868']
 

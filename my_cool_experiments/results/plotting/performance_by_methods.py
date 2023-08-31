@@ -1,4 +1,4 @@
-from experiments.results.common import *
+from my_cool_experiments.results.common import *
 
 
 def main(cfg: argparse.Namespace) -> None:
