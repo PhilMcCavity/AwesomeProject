@@ -17,7 +17,8 @@ algorithms = {
 
 
 def main(args: argparse.Namespace) -> None:
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
     run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
 
@@ -30,7 +31,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Define the model
     algorithm = algorithms[args.algorithm]
-    model = algorithm("MlpPolicy", env, learning_rate=args.learning_rate, batch_size=args.batch_size, verbose=1,
+    model = algorithm("MlpPolicy", env, learning_rate=args.learning_rate, gamma=args.gamma, verbose=1,
                       tensorboard_log="./tensorboard/", device="cuda")
 
     # Callbacks
@@ -54,15 +55,16 @@ def main(args: argparse.Namespace) -> None:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--algorithm', type=str, default='PPO', choices=['DQN', 'PPO'], help='RL algorithm')
+    parser.add_argument('--algorithm', type=str, default='PPO', choices=['DQN', 'A2C', 'PPO'], help='RL algorithm')
     parser.add_argument('--project', type=str, default='BasicExperiments', help='Wandb project name')
     parser.add_argument('--num_envs', type=int, default=10, help='Number of parallel environments')
     parser.add_argument('--env_name', type=str, default='CartPole-v1', help='Environment name')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for the optimizer')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
+    parser.add_argument('--gamma', type=float, default=0.99, help='Discount factor')
     parser.add_argument('--policy_kwargs', type=str, default='dict(activation_fn=torch.nn.ReLU, net_arch=[64, 64])',
                         help='Policy kwargs for DQN')
-    parser.add_argument('--max_steps', type=int, default=2e5, help='Maximum number of steps')
+    parser.add_argument('--max_steps', type=int, default=4e5, help='Maximum number of steps')
     parser.add_argument('--eval_freq', type=int, default=250, help='Frequency of evaluations')
     parser.add_argument('--save_freq', type=int, default=5e4, help='Frequency of saving the model')
     parser.add_argument('--n_eval_episodes', type=int, default=10, help='Number of episodes per evaluation')
