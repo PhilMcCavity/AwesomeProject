@@ -1,3 +1,5 @@
+import argparse
+
 from tianshou.highlevel.config import SamplingConfig
 from tianshou.highlevel.env import (
     EnvFactoryRegistered,
@@ -17,6 +19,7 @@ import wandb
 
 
 def main() -> None:
+    args = parse_args()
     experiment = (
         DQNExperimentBuilder(
             EnvFactoryRegistered(task="CartPole-v1", seed=0, venv_type=VectorEnvType.DUMMY),
@@ -54,6 +57,22 @@ def main() -> None:
     )
     experiment.run()
     wandb.join()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_envs', type=int, default=8, help='Number of parallel environments')
+    parser.add_argument('--env_name', type=str, default='CartPole-v1', help='Environment name')
+    parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for the optimizer')
+    parser.add_argument('--hidden_sizes', type=int, nargs='+', default=[128, 128, 128],
+                        help='Sizes of the hidden layers in the network')
+    parser.add_argument('--max_epoch', type=int, default=10, help='Maximum number of epochs')
+    parser.add_argument('--step_per_epoch', type=int, default=1000, help='Steps per epoch')
+    parser.add_argument('--step_per_collect', type=int, default=10, help='Steps per data collection')
+    parser.add_argument('--episode_per_test', type=int, default=100, help='Episodes per test phase')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
+    parser.add_argument('--record_interval', type=int, default=20, help='Interval of epochs to record videos')
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
