@@ -143,6 +143,7 @@ Pipfile.lock
 mjkey.txt
 
 /logs
+/log
 checkpoints
 /wandb
 _vizdoom.ini
