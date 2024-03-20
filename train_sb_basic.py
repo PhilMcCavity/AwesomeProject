@@ -1,7 +1,7 @@
-import gymnasium as gym
 from stable_baselines3 import DQN
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
+
 
 def train_and_run_mountain_car():
     # Make the environment with vectorized wrappers for automatic reset

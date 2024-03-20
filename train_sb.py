@@ -2,11 +2,18 @@ import argparse
 from datetime import datetime
 
 import gymnasium as gym
+from stable_baselines3 import PPO, DQN, A2C
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 from wandb.integration.sb3 import WandbCallback
 
 import wandb
+
+algorithms = {
+    'PPO': PPO,
+    'A2C': A2C,
+    'DQN': DQN,
+}
 
 
 def main(args: argparse.Namespace) -> None:
@@ -22,9 +29,9 @@ def main(args: argparse.Namespace) -> None:
     env = make_vec_env(args.env_name, n_envs=args.num_envs)
 
     # Define the model
-    model_class = globals()[args.algorithm]
-    model = model_class("MlpPolicy", env, learning_rate=args.learning_rate, batch_size=args.batch_size, verbose=1,
-                        tensorboard_log="./tensorboard/", device="cuda")
+    algorithm = algorithms[args.algorithm]
+    model = algorithm("MlpPolicy", env, learning_rate=args.learning_rate, batch_size=args.batch_size, verbose=1,
+                      tensorboard_log="./tensorboard/", device="cuda")
 
     # Callbacks
     eval_env = gym.make(args.env_name)
@@ -47,8 +54,8 @@ def main(args: argparse.Namespace) -> None:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--algorithm', type=str, default='DQN', choices=['DQN', 'PPO'], help='RL algorithm')
-    parser.add_argument('--project', type=str, default='SeriousExperiments', help='Wandb project name')
+    parser.add_argument('--algorithm', type=str, default='PPO', choices=['DQN', 'PPO'], help='RL algorithm')
+    parser.add_argument('--project', type=str, default='BasicExperiments', help='Wandb project name')
     parser.add_argument('--num_envs', type=int, default=10, help='Number of parallel environments')
     parser.add_argument('--env_name', type=str, default='CartPole-v1', help='Environment name')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for the optimizer')
