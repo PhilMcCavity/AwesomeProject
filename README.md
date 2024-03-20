@@ -1,5 +1,5 @@
-# MyCoolRepo
-🚀 **Welcome to MyCoolRepo: Unleashing the Quantum Leap in Machine Learning!** 🚀
+# Serious Experiments
+🚀 **Welcome to Serious Experiments: Unleashing the Quantum Leap in Machine Learning!** 🚀
 
 Dive into the future of innovation with MyCoolRepo, the unrivaled champion of cutting-edge machine learning in the uncharted realms of the quantum universe. 🌌🛸 Brace yourself for a mind-bending journey that defies the boundaries of conventionality and propels us into the pantheon of the avant-garde.
 
@@ -20,33 +20,7 @@ Join us in our pursuit of the unknown, and be part of the Quantum Collective tha
 
 Prepare to be dazzled, awed, and utterly transformed. Welcome to MyCoolRepo – where we don't just predict the future; we create it. 🌠🚀
 
-## Installation
-
-### Conda
-
-```bash
-conda env create -f environment.yml
-```
-
-### Local
-
-```bash
-pip install -e .
-```
-
-or
-
-```bash
-pip install -r requirements.txt
-```
-
-
-## Reproduce Our Results
-```
-python run.py --config configs/ours.yaml
-```
-
-## Here's a Koala
+## Koala is Watching
                  |       :     . |  
                  | '  :      '   |
                  |  .  |   '  |  |
@@ -67,3 +41,40 @@ python run.py --config configs/ours.yaml
                 | : `-.__ /` .   |
                 |    .   ` |    '|
                 |  .  : `   . |  |
+
+## Installation
+
+### Conda
+
+```bash
+conda env create -f environment.yml
+```
+
+### Local
+
+```bash
+pip install .
+```
+
+or
+
+```bash
+pip install -r requirements.txt
+```
+
+
+## Reproduce Our Results
+```
+python train_sb.py --algorithm PPO \
+                   --num_envs 10 \
+                   --env_name CartPole-v1 \
+                   --learning_rate 0.001 \
+                   --batch_size 64 \
+                   --policy_kwargs "dict(activation_fn=torch.nn.ReLU, net_arch=[64, 64])" \
+                   --max_steps 200000 \
+                   --eval_freq 1000 \
+                   --save_freq 50000 \
+                   --n_eval_episodes 10 \
+                   --log_interval 100 \
+                   --reward_threshold 400
+```

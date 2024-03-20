@@ -144,6 +144,7 @@ mjkey.txt
 
 /logs
 /log
+tensorboard
 checkpoints
 /wandb
 _vizdoom.ini

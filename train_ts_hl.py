@@ -30,11 +30,11 @@ def main() -> None:
                 watch_num_episodes=1,
             ),
             SamplingConfig(
-                num_epochs=100,
+                num_epochs=10,
                 step_per_epoch=10000,
                 batch_size=64,
-                num_train_envs=10,
-                num_test_envs=100,
+                num_train_envs=5,
+                num_test_envs=3,
                 buffer_size=20000,
                 step_per_collect=10,
                 update_per_step=1 / 10,
@@ -51,12 +51,11 @@ def main() -> None:
         .with_model_factory_default(hidden_sizes=(64, 64))
         .with_epoch_train_callback(EpochTrainCallbackDQNSetEps(0.3))
         .with_epoch_test_callback(EpochTestCallbackDQNSetEps(0.0))
-        # .with_epoch_stop_callback(EpochStopCallbackRewardThreshold(500))
+        .with_epoch_stop_callback(EpochStopCallbackRewardThreshold(500))
         .with_logger_factory(LoggerFactoryDefault(logger_type="wandb", wandb_project="FreshProject"))
         .build()
     )
     experiment.run()
-    wandb.join()
 
 
 def parse_args():
