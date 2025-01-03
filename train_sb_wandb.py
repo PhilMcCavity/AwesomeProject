@@ -1,11 +1,8 @@
 import argparse
-import os
 from datetime import datetime
 
 import gymnasium as gym
-from gymnasium.wrappers import RecordVideo
 from stable_baselines3 import PPO, DQN, A2C
-from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
 from wandb.integration.sb3 import WandbCallback
@@ -20,8 +17,6 @@ algorithms = {
 
 
 def main(args: argparse.Namespace) -> None:
-
-    print("HELLO")
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
@@ -40,16 +35,7 @@ def main(args: argparse.Namespace) -> None:
                       tensorboard_log="./tensorboard/", device="cuda")
 
     # Callbacks
-    video_folder = f"./videos/{run_name}"
-    os.makedirs(video_folder, exist_ok=True)
-    eval_env = gym.make(args.env_name, render_mode="rgb_array")
-    eval_env = RecordVideo(eval_env, video_folder=video_folder,
-                           episode_trigger=lambda episode_id: episode_id % args.record_freq == 0,
-                           name_prefix=f"{args.algorithm}_{args.env_name}")
-
-    # Instantiate the VideoLoggerCallback
-    video_logger_callback = VideoLoggerCallback(video_folder="./videos/", log_freq=args.record_freq)
-
+    eval_env = gym.make(args.env_name)
     eval_callback = EvalCallback(eval_env, best_model_save_path='./logs/',
                                  log_path='./logs/', eval_freq=args.eval_freq,
                                  deterministic=True, render=False,
@@ -84,32 +70,7 @@ def parse_args():
     parser.add_argument('--n_eval_episodes', type=int, default=10, help='Number of episodes per evaluation')
     parser.add_argument('--log_interval', type=int, default=100, help='Log interval')
     parser.add_argument('--reward_threshold', type=float, default=400, help='Reward threshold to stop training')
-    parser.add_argument('--record_freq', type=int, default=50, help='Frequency of recording episodes')
     return parser.parse_args()
-
-
-class VideoLoggerCallback(BaseCallback):
-    def __init__(self, video_folder: str, log_freq: int, verbose=1):
-        super(VideoLoggerCallback, self).__init__(verbose)
-        self.video_folder = video_folder
-        self.log_freq = log_freq
-        self.logged_videos = set()
-
-    def _on_step(self) -> bool:
-        # Check if it's time to log videos based on log_freq
-        if self.n_calls % self.log_freq == 0:
-            self._log_videos()
-        return True
-
-    def _log_videos(self):
-        # Find all video files in the video_folder
-        new_videos = [f for f in os.listdir(self.video_folder) if f.endswith('.mp4') and f not in self.logged_videos]
-        for video_file in new_videos:
-            # Log the video to wandb
-            wandb.log({"videos": wandb.Video(os.path.join(self.video_folder, video_file), fps=4, format="mp4")})
-            self.logged_videos.add(video_file)
-            if self.verbose > 0:
-                print(f"Logged video {video_file} to wandb.")
 
 
 if __name__ == "__main__":

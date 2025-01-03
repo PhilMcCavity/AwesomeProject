@@ -1,7 +1,7 @@
 import gymnasium as gym
 
 
-def run_mountain_car():
+def main():
     # Create the MountainCar environment
     env = gym.make('CartPole-v1', render_mode="human")
 
@@ -33,4 +33,4 @@ def run_mountain_car():
 
 
 if __name__ == "__main__":
-    run_mountain_car()
+    main()
