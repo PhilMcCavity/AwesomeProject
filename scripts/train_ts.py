@@ -28,7 +28,7 @@ def make_env(task, seed=0, record_video=False, record_interval=10, video_dir="./
 
 
 def get_envs(env_name, num_envs=8, record_interval=10, seed=0):
-    envs = [make_env(env_name, i + seed, i == 0, record_interval, f"./videos") for i in range(num_envs)]
+    envs = [make_env(env_name, i + seed, i == 0, record_interval, f"../videos") for i in range(num_envs)]
     train_envs = SubprocVectorEnv(envs)
     test_envs = SubprocVectorEnv([make_env(env_name, i + num_envs + seed) for i in range(num_envs)])
     return train_envs, test_envs
@@ -51,7 +51,7 @@ def main(cfg):
     policy = setup_network_and_policy(train_envs, cfg.learning_rate, cfg.hidden_sizes)
 
     # Setup the log directory for TensorBoard
-    log_dir = "./logs"
+    log_dir = "../logs"
     os.makedirs(log_dir, exist_ok=True)
 
     # Initialize the SummaryWriter for TensorBoard

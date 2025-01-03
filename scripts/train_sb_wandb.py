@@ -1,9 +1,13 @@
 import argparse
+from datetime import datetime
 
 import gymnasium as gym
 from stable_baselines3 import PPO, DQN, A2C
 from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
 from stable_baselines3.common.env_util import make_vec_env
+from wandb.integration.sb3 import WandbCallback
+
+import wandb
 
 algorithms = {
     'PPO': PPO,
@@ -13,6 +17,15 @@ algorithms = {
 
 
 def main(args: argparse.Namespace) -> None:
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+
+    run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
+
+    # Configure wandb
+    wandb.init(project=args.project, config=vars(args), entity="tu-e", sync_tensorboard=True, name=run_name,
+               monitor_gym=True, save_code=True, id=run_name, mode="online", group=args.env_name)
+
     # Create and wrap the environment
     env = make_vec_env(args.env_name, n_envs=args.num_envs)
 
@@ -23,17 +36,18 @@ def main(args: argparse.Namespace) -> None:
 
     # Callbacks
     eval_env = gym.make(args.env_name)
-    eval_callback = EvalCallback(eval_env, best_model_save_path='./logs/',
-                                 log_path='./logs/', eval_freq=args.eval_freq,
+    eval_callback = EvalCallback(eval_env, best_model_save_path='../logs/',
+                                 log_path='../logs/', eval_freq=args.eval_freq,
                                  deterministic=True, render=False,
                                  n_eval_episodes=args.n_eval_episodes)
 
     # stop_callback = StopTrainingOnRewardThreshold(reward_threshold=args.reward_threshold, verbose=1)
-    checkpoint_callback = CheckpointCallback(save_freq=args.save_freq, save_path='./logs/', name_prefix='model')
+    checkpoint_callback = CheckpointCallback(save_freq=args.save_freq, save_path='../logs/', name_prefix='model')
+    wandb_callback = WandbCallback(gradient_save_freq=args.log_interval, verbose=2)
 
     # Start the training
     model.learn(total_timesteps=args.max_steps, log_interval=args.log_interval,
-                callback=[eval_callback, checkpoint_callback])
+                callback=[eval_callback, checkpoint_callback, wandb_callback])
 
     # Close the environment
     env.close()
