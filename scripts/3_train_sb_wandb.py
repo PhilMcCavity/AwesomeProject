@@ -83,7 +83,7 @@ def main(args: argparse.Namespace):
                id=run_name, \
                mode="online", group=args.env_name, job_type=args.algorithm)
     run_name = wandb.run.name
-    base_path = Path(__file__).parent.parent.resolve()
+    base_path = Path(__file__).parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
     os.makedirs(log_dir, exist_ok=True)
 
