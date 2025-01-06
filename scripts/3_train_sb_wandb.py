@@ -1,13 +1,17 @@
 import argparse
+import os
 from datetime import datetime
+from pathlib import Path
+from typing import Callable
 
 import gymnasium as gym
-from stable_baselines3 import PPO, DQN, A2C
-from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback
-from stable_baselines3.common.env_util import make_vec_env
-from wandb.integration.sb3 import WandbCallback
-
 import wandb
+from stable_baselines3 import PPO, A2C, DQN
+from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import VecVideoRecorder, VecEnv
+from wandb.integration.sb3 import WandbCallback
 
 algorithms = {
     'PPO': PPO,
@@ -16,60 +20,129 @@ algorithms = {
 }
 
 
-def main(args: argparse.Namespace) -> None:
+class MultiSegmentVecVideoRecorder(VecVideoRecorder):
+    """
+    Extended VecVideoRecorder that updates video_name/video_path
+    each time recording starts, avoiding overwriting old files.
+    """
 
+    def __init__(
+            self,
+            venv: VecEnv,
+            video_folder: str,
+            record_video_trigger: Callable[[int], bool],
+            video_length: int = 200,
+            name_prefix: str = "rl-video",
+            log_to_wandb: bool = True,
+    ):
+        super().__init__(
+            venv=venv,
+            video_folder=video_folder,
+            record_video_trigger=record_video_trigger,
+            video_length=video_length,
+            name_prefix=name_prefix,
+        )
+        self.log_to_wandb = log_to_wandb
+
+    def _start_recording(self) -> None:
+        if self.recording:
+            self._stop_recording()
+        self.video_name = f"{self.name_prefix}-step-{self.step_id}-to-step-{self.step_id + self.video_length}.mp4"
+        self.video_path = os.path.join(self.video_folder, self.video_name)
+        self.recording = True
+
+    def _stop_recording(self) -> None:
+        """Stop current recording, save video, and log it to wandb."""
+        super()._stop_recording()
+        if self.log_to_wandb and wandb.run is not None and os.path.exists(self.video_path):
+            wandb.log({"video": wandb.Video(self.video_path)})
+
+
+class MountainCarRewardWrapper(gym.RewardWrapper):
+    def __init__(self, env, velocity_scale=10.0):
+        super().__init__(env)
+        self.velocity_scale = velocity_scale
+
+    def reward(self, reward):
+        velocity = abs(self.env.unwrapped.state[1])
+        reward += velocity * self.velocity_scale
+        return reward
+
+
+def make_env(env_name):
+    env = gym.make(env_name, render_mode="rgb_array")
+    if 'MountainCar' in env_name:
+        env = MountainCarRewardWrapper(env)
+    return Monitor(env)
+
+
+def main(args: argparse.Namespace):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-
     run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
+    wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, save_code=True, name=run_name,
+               id=run_name, \
+               mode="online", group=args.env_name, job_type=args.algorithm)
+    run_name = wandb.run.name
+    base_path = Path(__file__).parent.parent.resolve()
+    log_dir = f"{base_path}/logs/{run_name}"
+    os.makedirs(log_dir, exist_ok=True)
 
-    # Configure wandb
-    wandb.init(project=args.project, config=vars(args), entity="tu-e", sync_tensorboard=True, name=run_name,
-               monitor_gym=True, save_code=True, id=run_name, mode="online", group=args.env_name)
+    # env = DummyVecEnv([lambda: make_env(args.env_name)])
+    env = make_vec_env(lambda: make_env(args.env_name), n_envs=args.n_envs)
+    video_length = args.video_length
+    env = MultiSegmentVecVideoRecorder(
+        env,
+        f"{log_dir}/videos",
+        record_video_trigger=lambda x: x % args.record_freq == 0,
+        video_length=video_length,
+        name_prefix=args.env_name,
+    )
 
-    # Create and wrap the environment
-    env = make_vec_env(args.env_name, n_envs=args.num_envs)
+    policy = "CnnPolicy" if 'CarRacing' in args.env_name else "MlpPolicy"
 
-    # Define the model
-    algorithm = algorithms[args.algorithm]
-    model = algorithm("MlpPolicy", env, learning_rate=args.learning_rate, gamma=args.gamma, verbose=1,
-                      tensorboard_log="./tensorboard/", device="cuda")
+    model = PPO(policy, env, verbose=1, tensorboard_log=log_dir, learning_rate=args.learning_rate,
+                gamma=args.gamma, batch_size=args.batch_size)
 
-    # Callbacks
-    eval_env = gym.make(args.env_name)
-    eval_callback = EvalCallback(eval_env, best_model_save_path='../logs/',
-                                 log_path='../logs/', eval_freq=args.eval_freq,
-                                 deterministic=True, render=False,
-                                 n_eval_episodes=args.n_eval_episodes)
+    eval_callback = EvalCallback(
+        env,
+        best_model_save_path=log_dir,
+        log_path=log_dir,
+        eval_freq=args.eval_freq,
+        deterministic=True
+    )
 
-    # stop_callback = StopTrainingOnRewardThreshold(reward_threshold=args.reward_threshold, verbose=1)
-    checkpoint_callback = CheckpointCallback(save_freq=args.save_freq, save_path='../logs/', name_prefix='model')
-    wandb_callback = WandbCallback(gradient_save_freq=args.log_interval, verbose=2)
+    wandb_cb = WandbCallback(
+        gradient_save_freq=args.gradient_save_freq,
+        model_save_freq=args.model_save_freq,
+        model_save_path=log_dir,
+        verbose=2
+    )
 
-    # Start the training
-    model.learn(total_timesteps=args.max_steps, log_interval=args.log_interval,
-                callback=[eval_callback, checkpoint_callback, wandb_callback])
+    model.learn(
+        total_timesteps=args.max_steps,
+        callback=[eval_callback, wandb_cb]
+    )
 
-    # Close the environment
-    env.close()
+    model.save(f"{log_dir}/final_model")
+    wandb.save(f"{log_dir}/final_model.zip")
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--algorithm', type=str, default='PPO', choices=['DQN', 'A2C', 'PPO'], help='RL algorithm')
     parser.add_argument('--project', type=str, default='ExperimentalSetup', help='Wandb project name')
-    parser.add_argument('--num_envs', type=int, default=10, help='Number of parallel environments')
-    parser.add_argument('--env_name', type=str, default='CartPole-v1', help='Environment name')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, help='Learning rate for the optimizer')
+    parser.add_argument('--env_name', type=str, default='LunarLander-v3', help='Environment name',
+                        choices=['FrozenLake-v1', 'MountainCar-v0', 'CartPole-v1', 'Acrobot-v1', 'Pendulum-v1', 'LunarLander-v3', 'CarRacing-v3'])
+    parser.add_argument('--n_envs', type=int, default=4, help='Number of parallel environments')
+    parser.add_argument('--learning_rate', type=float, default=3e-4, help='Learning rate for the optimizer')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
     parser.add_argument('--gamma', type=float, default=0.99, help='Discount factor')
-    parser.add_argument('--policy_kwargs', type=str, default='dict(activation_fn=torch.nn.ReLU, net_arch=[64, 64])',
-                        help='Policy kwargs for DQN')
-    parser.add_argument('--max_steps', type=int, default=4e5, help='Maximum number of steps')
-    parser.add_argument('--eval_freq', type=int, default=250, help='Frequency of evaluations')
-    parser.add_argument('--save_freq', type=int, default=5e4, help='Frequency of saving the model')
-    parser.add_argument('--n_eval_episodes', type=int, default=10, help='Number of episodes per evaluation')
-    parser.add_argument('--log_interval', type=int, default=100, help='Log interval')
-    parser.add_argument('--reward_threshold', type=float, default=400, help='Reward threshold to stop training')
+    parser.add_argument('--max_steps', type=int, default=1e6, help='Maximum number of steps')
+    parser.add_argument('--eval_freq', type=int, default=5000, help='Frequency of evaluations')
+    parser.add_argument('--model_save_freq', type=int, default=5000, help='Frequency of saving the model')
+    parser.add_argument('--gradient_save_freq', type=int, default=1000, help='Frequency of saving the model')
+    parser.add_argument('--record_freq', type=int, default=5000, help='Frequency of recording episodes')
+    parser.add_argument('--video_length', type=int, default=250, help='Length of the recording')
     return parser.parse_args()
 
 

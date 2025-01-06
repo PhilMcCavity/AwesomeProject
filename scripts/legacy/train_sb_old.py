@@ -22,13 +22,13 @@ def main(args: argparse.Namespace) -> None:
 
     # Callbacks
     eval_env = gym.make(args.env_name)
-    eval_callback = EvalCallback(eval_env, best_model_save_path='../logs/',
-                                 log_path='../logs/', eval_freq=args.eval_freq,
+    eval_callback = EvalCallback(eval_env, best_model_save_path='../../logs/',
+                                 log_path='../../logs/', eval_freq=args.eval_freq,
                                  deterministic=True, render=False,
                                  n_eval_episodes=args.n_eval_episodes)
 
     # stop_callback = StopTrainingOnRewardThreshold(reward_threshold=args.reward_threshold, verbose=1)
-    checkpoint_callback = CheckpointCallback(save_freq=args.save_freq, save_path='../logs/', name_prefix='model')
+    checkpoint_callback = CheckpointCallback(save_freq=args.save_freq, save_path='../../logs/', name_prefix='model')
 
     # Start the training
     model.learn(total_timesteps=args.max_steps, log_interval=args.log_interval,
