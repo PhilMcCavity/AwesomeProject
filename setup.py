@@ -2,18 +2,19 @@ from setuptools import setup, find_packages
 
 requirements = [
     'gymnasium',
-    'gymnasium[classic-control]'
+    # 'gymnasium[classic-control]'
 ]
 
 train_requirements = [
-    'tianshou',
+    'stable-baselines3',
+    'tensorboard',
     'wandb',
     'moviepy',
 ]
 
 setup(
-    name="MyProject",
-    version="0.1",
+    name="AwesomeProject",
+    version="0.1.0",
     author="Phil McCavity",
     author_email="phil.mccavity@example.com",
     description="A completely working example",
@@ -27,4 +28,5 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    python_requires=">=3.8",
 )
