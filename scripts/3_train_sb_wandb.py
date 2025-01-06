@@ -142,7 +142,7 @@ def parse_args():
     parser.add_argument('--model_save_freq', type=int, default=5000, help='Frequency of saving the model')
     parser.add_argument('--gradient_save_freq', type=int, default=100, help='Frequency of saving the model')
     parser.add_argument('--record_freq', type=int, default=5000, help='Frequency of recording episodes')
-    parser.add_argument('--video_length', type=int, default=250, help='Length of the recording')
+    parser.add_argument('--video_length', type=int, default=1000, help='Length of the recording')
     return parser.parse_args()
 
 
