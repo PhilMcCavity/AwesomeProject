@@ -83,7 +83,7 @@ def main(args: argparse.Namespace):
                id=run_name, \
                mode="online", group=args.env_name, job_type=args.algorithm)
     run_name = wandb.run.name
-    base_path = Path(__file__).parent.resolve()
+    base_path = Path(__file__).parent.parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
     os.makedirs(log_dir, exist_ok=True)
 
@@ -140,7 +140,7 @@ def parse_args():
     parser.add_argument('--max_steps', type=int, default=1e6, help='Maximum number of steps')
     parser.add_argument('--eval_freq', type=int, default=5000, help='Frequency of evaluations')
     parser.add_argument('--model_save_freq', type=int, default=5000, help='Frequency of saving the model')
-    parser.add_argument('--gradient_save_freq', type=int, default=1000, help='Frequency of saving the model')
+    parser.add_argument('--gradient_save_freq', type=int, default=100, help='Frequency of saving the model')
     parser.add_argument('--record_freq', type=int, default=5000, help='Frequency of recording episodes')
     parser.add_argument('--video_length', type=int, default=250, help='Length of the recording')
     return parser.parse_args()
