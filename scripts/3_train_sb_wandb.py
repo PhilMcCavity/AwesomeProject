@@ -6,7 +6,7 @@ from typing import Callable
 
 import gymnasium as gym
 import wandb
-from stable_baselines3 import PPO, A2C, DQN
+from stable_baselines3 import PPO, A2C, DQN, SAC, TD3
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
@@ -17,6 +17,8 @@ algorithms = {
     'PPO': PPO,
     'A2C': A2C,
     'DQN': DQN,
+    'SAC': SAC,
+    'TD3': TD3,
 }
 
 
@@ -69,11 +71,27 @@ class MountainCarRewardWrapper(gym.RewardWrapper):
         return reward
 
 
-def make_env(env_name):
-    env = gym.make(env_name, render_mode="rgb_array")
-    if 'MountainCar' in env_name:
-        env = MountainCarRewardWrapper(env)
-    return Monitor(env)
+def make_env(env_name, seed=None):
+    def _init():
+        env = gym.make(env_name, render_mode="rgb_array")
+        if seed is not None:
+            env.reset(seed=seed)
+        if 'MountainCar' in env_name:
+            env = MountainCarRewardWrapper(env)
+        return Monitor(env)
+    return _init
+
+
+
+def create_model(args, env, log_dir, policy):
+    algorithm = algorithms[args.algorithm]
+    if args.algorithm == 'A2C':
+        model = algorithm(policy, env, verbose=1, tensorboard_log=log_dir, learning_rate=args.learning_rate,
+                          gamma=args.gamma, seed=args.seed)
+    else:
+        model = algorithm(policy, env, verbose=1, tensorboard_log=log_dir, learning_rate=args.learning_rate,
+                          gamma=args.gamma, seed=args.seed, batch_size=args.batch_size)
+    return model
 
 
 def main(args: argparse.Namespace):
@@ -87,7 +105,7 @@ def main(args: argparse.Namespace):
     os.makedirs(log_dir, exist_ok=True)
 
     # env = DummyVecEnv([lambda: make_env(args.env_name)])
-    env = make_vec_env(lambda: make_env(args.env_name), n_envs=args.n_envs)
+    env = make_vec_env(lambda: make_env(args.env_name, seed=args.seed), n_envs=args.n_envs)
     video_length = args.video_length
     env = MultiSegmentVecVideoRecorder(
         env,
@@ -99,8 +117,7 @@ def main(args: argparse.Namespace):
 
     policy = "CnnPolicy" if 'CarRacing' in args.env_name else "MlpPolicy"
 
-    model = PPO(policy, env, verbose=1, tensorboard_log=log_dir, learning_rate=args.learning_rate,
-                gamma=args.gamma, batch_size=args.batch_size)
+    model = create_model(args, env, log_dir, policy)
 
     eval_callback = EvalCallback(
         env,
@@ -128,10 +145,13 @@ def main(args: argparse.Namespace):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--algorithm', type=str, default='PPO', choices=['DQN', 'A2C', 'PPO'], help='RL algorithm')
+    parser.add_argument('--algorithm', type=str, default='PPO', help='RL algorithm',
+                        choices=['DQN', 'A2C', 'PPO', 'SAC', 'TD3'])
     parser.add_argument('--project', type=str, default='ExperimentalSetup', help='Wandb project name')
     parser.add_argument('--env_name', type=str, default='LunarLander-v3', help='Environment name',
-                        choices=['FrozenLake-v1', 'MountainCar-v0', 'CartPole-v1', 'Acrobot-v1', 'Pendulum-v1', 'LunarLander-v3', 'CarRacing-v3'])
+                        choices=['FrozenLake-v1', 'MountainCar-v0', 'MountainCarContinuous-v0', 'CartPole-v1',
+                                 'Acrobot-v1', 'Pendulum-v1', 'LunarLander-v3', 'CarRacing-v3'])
+    parser.add_argument('--seed', type=int, default=42, help='Seed for the pseudo random generators')
     parser.add_argument('--n_envs', type=int, default=4, help='Number of parallel environments')
     parser.add_argument('--learning_rate', type=float, default=3e-4, help='Learning rate for the optimizer')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
