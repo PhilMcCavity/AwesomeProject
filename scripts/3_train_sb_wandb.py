@@ -98,7 +98,7 @@ def main(args: argparse.Namespace):
     random.seed(args.seed)
     np.random.seed(args.seed)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
+    run_name = f'{args.algorithm}_{args.env_name}_seed_{args.seed}_{timestamp}'
     base_path = Path(__file__).parent.parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
     wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, name=run_name, dir=log_dir, id=run_name,
