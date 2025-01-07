@@ -80,8 +80,7 @@ def main(args: argparse.Namespace):
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
     wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, save_code=True, name=run_name,
-               id=run_name, \
-               mode="online", group=args.env_name, job_type=args.algorithm)
+               id=run_name, mode="online", group=args.env_name, job_type=args.algorithm, tags=args.wandb_tags)
     run_name = wandb.run.name
     base_path = Path(__file__).parent.parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
@@ -143,6 +142,7 @@ def parse_args():
     parser.add_argument('--gradient_save_freq', type=int, default=100, help='Frequency of saving the model')
     parser.add_argument('--record_freq', type=int, default=5000, help='Frequency of recording episodes')
     parser.add_argument('--video_length', type=int, default=1000, help='Length of the recording')
+    parser.add_argument('--wandb_tags', type=str, nargs='+', default=[], help='Tags to denote runs')
     return parser.parse_args()
 
 
