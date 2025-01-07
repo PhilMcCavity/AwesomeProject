@@ -1,10 +1,12 @@
 import argparse
 import os
+import random
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
 import gymnasium as gym
+import numpy as np
 import wandb
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3
 from stable_baselines3.common.callbacks import EvalCallback
@@ -13,7 +15,7 @@ from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecVideoRecorder, VecEnv
 from wandb.integration.sb3 import WandbCallback
 
-algorithms = {
+ALGO_FACTORY = {
     'PPO': PPO,
     'A2C': A2C,
     'DQN': DQN,
@@ -72,19 +74,17 @@ class MountainCarRewardWrapper(gym.RewardWrapper):
 
 
 def make_env(env_name, seed=None):
-    def _init():
-        env = gym.make(env_name, render_mode="rgb_array")
-        if seed is not None:
-            env.reset(seed=seed)
-        if 'MountainCar' in env_name:
-            env = MountainCarRewardWrapper(env)
-        return Monitor(env)
-    return _init
+    env = gym.make(env_name, render_mode="rgb_array")
+    if seed is not None:
+        env.reset(seed=seed)
+    if 'MountainCar' in env_name:
+        env = MountainCarRewardWrapper(env)
+    return Monitor(env)
 
 
 
 def create_model(args, env, log_dir, policy):
-    algorithm = algorithms[args.algorithm]
+    algorithm = ALGO_FACTORY[args.algorithm]
     if args.algorithm == 'A2C':
         model = algorithm(policy, env, verbose=1, tensorboard_log=log_dir, learning_rate=args.learning_rate,
                           gamma=args.gamma, seed=args.seed)
@@ -95,13 +95,14 @@ def create_model(args, env, log_dir, policy):
 
 
 def main(args: argparse.Namespace):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     run_name = f'{args.algorithm}_{args.env_name}_{timestamp}'
-    wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, save_code=True, name=run_name,
-               id=run_name, mode="online", group=args.env_name, job_type=args.algorithm, tags=args.wandb_tags)
-    run_name = wandb.run.name
     base_path = Path(__file__).parent.parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
+    wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, name=run_name, dir=log_dir, id=run_name,
+               save_code=True, mode="online", group=args.env_name, job_type=args.algorithm, tags=args.wandb_tags)
     os.makedirs(log_dir, exist_ok=True)
 
     # env = DummyVecEnv([lambda: make_env(args.env_name)])
