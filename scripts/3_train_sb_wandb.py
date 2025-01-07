@@ -101,7 +101,7 @@ def main(args: argparse.Namespace):
     run_name = f'{args.algorithm}_{args.env_name}_seed_{args.seed}_{timestamp}'
     base_path = Path(__file__).parent.parent.resolve()
     log_dir = f"{base_path}/logs/{run_name}"
-    wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, name=run_name, dir=log_dir, id=run_name,
+    wandb.init(project=args.project, config=vars(args), sync_tensorboard=True, name=run_name, dir=base_path, id=run_name,
                save_code=True, mode="online", group=args.env_name, job_type=args.algorithm, tags=args.wandb_tags)
     os.makedirs(log_dir, exist_ok=True)
 
