@@ -1,20 +1,11 @@
-import argparse
 import os
-import random
-from datetime import datetime
-from pathlib import Path
 from typing import Callable
 
 import gymnasium as gym
-import numpy as np
 import wandb
 from stable_baselines3 import PPO, A2C, DQN, SAC, TD3
-from stable_baselines3.common.callbacks import EvalCallback
-from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import VecVideoRecorder, VecEnv
-from wandb.integration.sb3 import WandbCallback
-
 
 ALGO_FACTORY = {
     'PPO': PPO,
